@@ -77,8 +77,8 @@ class gradereport_htmlexport_report extends grade_report {
         
         $html = '';
         
-        // Get enrolled students with error handling
-        $students = $this->get_enrolled_students();
+        // Get enrolled students
+        $students = get_enrolled_users($this->context, 'moodle/grade:view', 0, 'u.*', 'u.lastname, u.firstname');
         
         if (empty($students)) {
             return $OUTPUT->notification(get_string('nostudents', 'gradereport_htmlexport'), 'info');
@@ -158,8 +158,8 @@ class gradereport_htmlexport_report extends grade_report {
     public function export_all_students_bulk() {
         global $CFG, $DB;
         
-        // Get enrolled students with error handling
-        $students = $this->get_enrolled_students();
+        // Get enrolled students
+        $students = get_enrolled_users($this->context, 'moodle/grade:view', 0, 'u.*', 'u.lastname, u.firstname');
         
         if (empty($students)) {
             throw new moodle_exception('nostudents', 'gradereport_htmlexport');
@@ -457,87 +457,21 @@ class gradereport_htmlexport_report extends grade_report {
      * @return bool
      */
     private function can_view_grade_item($grade_item, $userid) {
-        try {
-            // Check if item is hidden
-            if ($grade_item->is_hidden()) {
-                return false;
-            }
-        } catch (Exception $e) {
-            // If checking hidden status fails, assume it's visible
-            error_log('gradereport_htmlexport: Error checking if grade item is hidden: ' . $e->getMessage());
+        // Check if item is hidden
+        if ($grade_item->is_hidden()) {
+            return false;
         }
         
-        try {
-            // Check if user has capability to view hidden items
-            if (has_capability('moodle/grade:viewhidden', $this->context)) {
-                return true;
-            }
-        } catch (Exception $e) {
-            // If capability check fails, continue with other checks
-            error_log('gradereport_htmlexport: Error checking viewhidden capability: ' . $e->getMessage());
-        }
-        
-        try {
-            // For students, check if the grade item is visible to them
-            // This is a simplified check - in practice you might need more complex logic
-            return !$grade_item->is_locked() && !$grade_item->is_hidden();
-        } catch (Exception $e) {
-            // If all checks fail, default to showing the item
-            error_log('gradereport_htmlexport: Error checking grade item visibility: ' . $e->getMessage());
+        // Check if user has capability to view hidden items
+        if (has_capability('moodle/grade:viewhidden', $this->context)) {
             return true;
         }
+        
+        // For students, check if the grade item is visible to them
+        // This is a simplified check - in practice you might need more complex logic
+        return !$grade_item->is_locked() && !$grade_item->is_hidden();
     }
     
-    /**
-     * Get enrolled students with robust error handling
-     *
-     * @return array Array of enrolled students
-     */
-    private function get_enrolled_students() {
-        try {
-            // First try: Get users with grade view capability
-            $students = get_enrolled_users($this->context, 'moodle/grade:view', 0, 'u.*', 'u.lastname, u.firstname');
-            if (!empty($students)) {
-                return $students;
-            }
-        } catch (Exception $e) {
-            // Log the error and continue to fallback methods
-            error_log('gradereport_htmlexport: Error getting students with capability: ' . $e->getMessage());
-        }
-        
-        try {
-            // Second try: Get all enrolled users without capability restriction
-            $students = get_enrolled_users($this->context, '', 0, 'u.*', 'u.lastname, u.firstname');
-            if (!empty($students)) {
-                return $students;
-            }
-        } catch (Exception $e) {
-            // Log the error and continue to fallback methods
-            error_log('gradereport_htmlexport: Error getting all enrolled users: ' . $e->getMessage());
-        }
-        
-        try {
-            // Third try: Get users directly from course enrolments
-            global $DB;
-            $sql = "SELECT DISTINCT u.* 
-                    FROM {user} u 
-                    JOIN {user_enrolments} ue ON ue.userid = u.id 
-                    JOIN {enrol} e ON e.id = ue.enrolid 
-                    WHERE e.courseid = ? AND ue.status = 0 AND e.status = 0
-                    ORDER BY u.lastname, u.firstname";
-            $students = $DB->get_records_sql($sql, array($this->courseid));
-            if (!empty($students)) {
-                return $students;
-            }
-        } catch (Exception $e) {
-            // Log the error
-            error_log('gradereport_htmlexport: Error getting users from enrolments: ' . $e->getMessage());
-        }
-        
-        // Return empty array if all methods fail
-        return array();
-    }
-
     /**
      * Check if current user can view grades for specified user
      *
@@ -547,27 +481,14 @@ class gradereport_htmlexport_report extends grade_report {
     private function can_view_user_grades($userid) {
         global $USER;
         
-        try {
-            // Teachers can view all students
-            if (has_capability('moodle/grade:viewall', $this->context)) {
-                return true;
-            }
-        } catch (Exception $e) {
-            // If capability check fails, continue to other checks
-            error_log('gradereport_htmlexport: Error checking viewall capability: ' . $e->getMessage());
+        // Teachers can view all students
+        if (has_capability('moodle/grade:viewall', $this->context)) {
+            return true;
         }
         
-        try {
-            // Students can only view their own grades
-            if ($userid == $USER->id && has_capability('moodle/grade:view', $this->context)) {
-                return true;
-            }
-        } catch (Exception $e) {
-            // If capability check fails, allow if user is viewing their own grades
-            if ($userid == $USER->id) {
-                return true;
-            }
-            error_log('gradereport_htmlexport: Error checking grade view capability: ' . $e->getMessage());
+        // Students can only view their own grades
+        if ($userid == $USER->id && has_capability('moodle/grade:view', $this->context)) {
+            return true;
         }
         
         return false;
@@ -912,57 +833,34 @@ class gradereport_htmlexport_report extends grade_report {
     private function get_site_logo_url() {
         global $CFG, $OUTPUT;
         
-        try {
-            // First priority: Site-wide logo from Site administration > Appearance > Logos
-            if (!empty($CFG->logo)) {
-                return $CFG->wwwroot . '/pluginfile.php/1/core_admin/logo/0x200/' . $CFG->logo;
+        // First priority: Site-wide logo from Site administration > Appearance > Logos
+        if (!empty($CFG->logo)) {
+            return $CFG->wwwroot . '/pluginfile.php/1/core_admin/logo/0x200/' . $CFG->logo;
+        }
+        
+        // Alternative method for site logo
+        if (isset($CFG->custommenuitems) || method_exists($OUTPUT, 'get_logo_url')) {
+            $logourl = $OUTPUT->get_logo_url();
+            if ($logourl && !empty($logourl)) {
+                return $logourl->out();
             }
-            
-            // Alternative method for site logo
-            if (method_exists($OUTPUT, 'get_logo_url')) {
-                try {
-                    $logourl = $OUTPUT->get_logo_url();
-                    if ($logourl && !empty($logourl)) {
-                        return $logourl->out();
-                    }
-                } catch (Exception $e) {
-                    // Continue to next method if this fails
-                }
-            }
-            
-            // Try current theme logo settings
-            try {
-                $theme = theme_config::load();
-                if (isset($theme->settings->logo) && !empty($theme->settings->logo)) {
-                    return $theme->setting_file_url('logo', 'logo');
-                }
-            } catch (Exception $e) {
-                // Continue to next method if this fails
-            }
-            
-            // Fallback to default theme logo
-            try {
-                if (defined('theme_config::DEFAULT_THEME')) {
-                    $default_theme = theme_config::load(theme_config::DEFAULT_THEME);
-                    if (isset($default_theme->settings->logo) && !empty($default_theme->settings->logo)) {
-                        return $default_theme->setting_file_url('logo', 'logo');
-                    }
-                }
-            } catch (Exception $e) {
-                // Continue to final fallback if this fails
-            }
-            
-            // Final fallback: favicon (only if file actually exists)
-            if (!empty($CFG->dirroot) && !empty($CFG->wwwroot)) {
-                $favicon_path = $CFG->dirroot . '/theme/boost/pix/favicon.ico';
-                if (file_exists($favicon_path)) {
-                    return $CFG->wwwroot . '/theme/boost/pix/favicon.ico';
-                }
-            }
-            
-        } catch (Exception $e) {
-            // If any unexpected error occurs, just return null
-            error_log('gradereport_htmlexport: Error getting site logo: ' . $e->getMessage());
+        }
+        
+        // Try current theme logo settings
+        $theme = theme_config::load();
+        if (isset($theme->settings->logo) && !empty($theme->settings->logo)) {
+            return $theme->setting_file_url('logo', 'logo');
+        }
+        
+        // Fallback to default theme logo
+        $default_theme = theme_config::load(theme_config::DEFAULT_THEME);
+        if (isset($default_theme->settings->logo) && !empty($default_theme->settings->logo)) {
+            return $default_theme->setting_file_url('logo', 'logo');
+        }
+        
+        // Final fallback: favicon
+        if (file_exists($CFG->dirroot . '/theme/boost/pix/favicon.ico')) {
+            return $CFG->wwwroot . '/theme/boost/pix/favicon.ico';
         }
         
         return null;
@@ -977,4 +875,3 @@ class gradereport_htmlexport_report extends grade_report {
         return '</body></html>';
     }
 }
-
