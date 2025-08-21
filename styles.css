@@ -1,0 +1,56 @@
+/**
+ * Styles for HTML Export Grade Report
+ *
+ * @package    gradereport_htmlexport
+ * @copyright  2025 Your Name
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* Main interface styles */
+.gradereport-htmlexport .form-group {
+    margin-bottom: 15px;
+}
+
+.gradereport-htmlexport label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.gradereport-htmlexport .form-control {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.gradereport-htmlexport .btn {
+    padding: 10px 20px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.gradereport-htmlexport .btn-primary {
+    background-color: #0073aa;
+    color: white;
+}
+
+.gradereport-htmlexport .btn-primary:hover {
+    background-color: #005a87;
+}
+
+/* Export preview styles */
+.export-preview {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-top: 20px;
+    background-color: #f9f9f9;
+}
+
+.export-preview h3 {
+    margin-top: 0;
+    color: #333;
+}

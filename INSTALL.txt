@@ -1,0 +1,41 @@
+HTML Export Grade Report Plugin - Installation Instructions
+
+INSTALLATION STEPS:
+
+1. Extract the plugin files to your Moodle installation directory:
+   /path/to/moodle/grade/report/htmlexport/
+
+2. Ensure all files have proper permissions (readable by web server)
+
+3. Log in to your Moodle site as an administrator
+
+4. Visit: Site administration → Notifications
+   
+5. Moodle will detect the new plugin and prompt you to upgrade the database
+
+6. Click "Upgrade Moodle database now" to complete installation
+
+7. The plugin will now be available in:
+   - Course gradebook → Choose an action → HTML Export
+   - Individual grade reports for students
+
+VERIFICATION:
+
+To verify installation worked:
+1. Go to Site administration → Plugins → Grade reports
+2. You should see "HTML Export" listed as an installed grade report plugin
+3. Visit any course gradebook and check the grade reports dropdown
+
+TROUBLESHOOTING:
+
+If the plugin doesn't appear:
+- Check file permissions 
+- Verify files are in correct location: grade/report/htmlexport/
+- Check Moodle debug messages for any errors
+- Ensure your Moodle version is 4.0 or higher
+
+UNINSTALLATION:
+
+1. Site administration → Plugins → Grade reports → HTML Export
+2. Click "Uninstall" 
+3. Delete the plugin directory: grade/report/htmlexport/

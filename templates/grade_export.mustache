@@ -1,0 +1,36 @@
+{{!
+    @template gradereport_htmlexport/grade_export
+
+    Template for HTML grade export
+
+    Context variables required for this template:
+    * sitename - Name of the site
+    * coursename - Name of the course
+    * studentname - Full name of the student
+    * reportdate - Date of the report
+    * gradetable - HTML table with grades
+}}
+<!DOCTYPE html>
+<html dir="{{#rtl}}rtl{{/rtl}}{{^rtl}}ltr{{/rtl}}">
+<head>
+    <meta charset="utf-8">
+    <title>{{coursename}} - {{studentname}}</title>
+    <style>
+        {{{css}}}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{sitename}}</h1>
+        <h2>{{coursename}}</h2>
+        <div class="student-info">
+            <h3>{{#str}}student, gradereport_htmlexport{{/str}}: {{studentname}}</h3>
+            <p>{{#str}}reportdate, gradereport_htmlexport{{/str}}: {{reportdate}}</p>
+        </div>
+    </div>
+    
+    <div class="grade-table">
+        {{{gradetable}}}
+    </div>
+</body>
+</html>
