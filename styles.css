@@ -43,14 +43,15 @@
 }
 
 /* Export preview styles */
-.export-preview {
+.gradereport-htmlexport .export-preview {
     border: 1px solid #ddd;
     padding: 20px;
     margin-top: 20px;
     background-color: #f9f9f9;
 }
 
-.export-preview h3 {
+.gradereport-htmlexport .export-preview h3 {
     margin-top: 0;
     color: #333;
 }
+

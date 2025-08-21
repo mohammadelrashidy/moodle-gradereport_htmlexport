@@ -1,10 +1,25 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
- * HTML Export grade report class
+ * Plugin version and other meta-data are defined here.
  *
- * @package    gradereport_htmlexport
- * @copyright  2025 Your Name
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     gradeexport_htmlexport
+ * @copyright   2025 Mohammad Nabil <mohammad@smartlearn.education>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -818,34 +833,57 @@ class gradereport_htmlexport_report extends grade_report {
     private function get_site_logo_url() {
         global $CFG, $OUTPUT;
         
-        // First priority: Site-wide logo from Site administration > Appearance > Logos
-        if (!empty($CFG->logo)) {
-            return $CFG->wwwroot . '/pluginfile.php/1/core_admin/logo/0x200/' . $CFG->logo;
-        }
-        
-        // Alternative method for site logo
-        if (isset($CFG->custommenuitems) || method_exists($OUTPUT, 'get_logo_url')) {
-            $logourl = $OUTPUT->get_logo_url();
-            if ($logourl && !empty($logourl)) {
-                return $logourl->out();
+        try {
+            // First priority: Site-wide logo from Site administration > Appearance > Logos
+            if (!empty($CFG->logo)) {
+                return $CFG->wwwroot . '/pluginfile.php/1/core_admin/logo/0x200/' . $CFG->logo;
             }
-        }
-        
-        // Try current theme logo settings
-        $theme = theme_config::load();
-        if (isset($theme->settings->logo) && !empty($theme->settings->logo)) {
-            return $theme->setting_file_url('logo', 'logo');
-        }
-        
-        // Fallback to default theme logo
-        $default_theme = theme_config::load(theme_config::DEFAULT_THEME);
-        if (isset($default_theme->settings->logo) && !empty($default_theme->settings->logo)) {
-            return $default_theme->setting_file_url('logo', 'logo');
-        }
-        
-        // Final fallback: favicon
-        if (file_exists($CFG->dirroot . '/theme/boost/pix/favicon.ico')) {
-            return $CFG->wwwroot . '/theme/boost/pix/favicon.ico';
+            
+            // Alternative method for site logo
+            if (method_exists($OUTPUT, 'get_logo_url')) {
+                try {
+                    $logourl = $OUTPUT->get_logo_url();
+                    if ($logourl && !empty($logourl)) {
+                        return $logourl->out();
+                    }
+                } catch (Exception $e) {
+                    // Continue to next method if this fails
+                }
+            }
+            
+            // Try current theme logo settings
+            try {
+                $theme = theme_config::load();
+                if (isset($theme->settings->logo) && !empty($theme->settings->logo)) {
+                    return $theme->setting_file_url('logo', 'logo');
+                }
+            } catch (Exception $e) {
+                // Continue to next method if this fails
+            }
+            
+            // Fallback to default theme logo
+            try {
+                if (defined('theme_config::DEFAULT_THEME')) {
+                    $default_theme = theme_config::load(theme_config::DEFAULT_THEME);
+                    if (isset($default_theme->settings->logo) && !empty($default_theme->settings->logo)) {
+                        return $default_theme->setting_file_url('logo', 'logo');
+                    }
+                }
+            } catch (Exception $e) {
+                // Continue to final fallback if this fails
+            }
+            
+            // Final fallback: favicon (only if file actually exists)
+            if (!empty($CFG->dirroot) && !empty($CFG->wwwroot)) {
+                $favicon_path = $CFG->dirroot . '/theme/boost/pix/favicon.ico';
+                if (file_exists($favicon_path)) {
+                    return $CFG->wwwroot . '/theme/boost/pix/favicon.ico';
+                }
+            }
+            
+        } catch (Exception $e) {
+            // If any unexpected error occurs, just return null
+            error_log('gradereport_htmlexport: Error getting site logo: ' . $e->getMessage());
         }
         
         return null;
@@ -860,3 +898,4 @@ class gradereport_htmlexport_report extends grade_report {
         return '</body></html>';
     }
 }
+
